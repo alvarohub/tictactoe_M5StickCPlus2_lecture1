@@ -57,11 +57,12 @@ pio device monitor --baud 115200
 
 ```
 tictactoe/
-├── platformio.ini   # PlatformIO config (board, libs)
+├── platformio.ini       # PlatformIO config (board, libs)
 ├── src/
-│   └── main.cpp     # Complete game (~335 lines)
-├── README.md        # This file
-└── JOURNAL.md       # Development log & conversation history
+│   └── main.cpp         # Complete game (~335 lines)
+├── README.md            # This file
+├── TECHNICAL_DETAILS.md # Deep dive into the minimax algorithm
+└── JOURNAL.md           # Development log & conversation history
 ```
 
 ## How It Works
@@ -85,10 +86,13 @@ tictactoe/
 
 The AI uses a classic **minimax** search with depth tracking:
 
-- Explores all possible future moves recursively
+- Explores all possible future moves recursively (exhaustive — no alpha-beta pruning)
 - Minimises its own score (plays as O = -1)
-- Returns optimal move every time
-- On a 3×3 board, the search space is small enough to run in real-time on ESP32
+- Depth-adjusted scoring: prefers fast wins and delays losses
+- Returns optimal move every time — provably unbeatable
+- On a 3×3 board, the search space (~60K nodes) evaluates in < 1 ms on ESP32
+
+For a detailed walkthrough of the algorithm, game tree visualization, complexity analysis, and discussion of alpha-beta pruning, see **[TECHNICAL_DETAILS.md](TECHNICAL_DETAILS.md)**.
 
 ### Color Scheme
 
