@@ -77,6 +77,45 @@ $$\text{score}_O = -10 + \text{depth}$$
 
 This means **faster wins are preferred** and **slower losses are preferred**. Without depth adjustment, the AI might see "I lose no matter what" and play randomly — but with it, the AI will delay losing as long as possible (and choose the fastest win when winning).
 
+**Curiosity — what about the slowest (most convoluted) win?** If we wanted the AI to _delay_ winning as long as possible (maximise showmanship!), we'd flip the depth sign:
+
+$$\text{score}_X = 10 + \text{depth} \qquad \text{score}_O = -10 - \text{depth}$$
+
+This way, a win at depth 7 is valued higher than a win at depth 3 for whichever player is winning, so the algorithm picks the longest winning path.
+
+**Asymmetric styles — one clinical, one theatrical.** We can even mix styles per player! The scoring just needs different depth signs for X and O:
+
+| X Style                  | O Style    | $\text{score}_X$ | $\text{score}_O$ | Effect                                 |
+| ------------------------ | ---------- | ---------------- | ---------------- | -------------------------------------- |
+| Clinical                 | Clinical   | $10 - d$         | $-10 + d$        | Both win fast (current implementation) |
+| Theatrical               | Theatrical | $10 + d$         | $-10 - d$        | Both drag out wins                     |
+| Clinical X, Theatrical O | —          | $10 - d$         | $-10 - d$        | X wins fast, O shows off               |
+| Theatrical X, Clinical O | —          | $10 + d$         | $-10 + d$        | X shows off, O wins fast               |
+
+The key insight: the depth sign for each player's win score is **independent**. A "clinical" player uses `−depth` (prefers shallow wins), a "theatrical" player uses `+depth` (prefers deep wins).
+
+**Important caveat: we only control the AI.** The table above is slightly misleading — the "X style" isn't something we _choose_ for the real human player. The human can play however they want: optimally, randomly, or change strategy mid-game. What $\text{score}_X$ really controls is what the AI **assumes** about the human in its internal model.
+
+Minimax is a _worst-case_ algorithm: it assumes the opponent plays **optimally against us**. The $\text{score}_X$ formula defines what "optimal" means for the modeled opponent:
+
+- $10 - d$: AI assumes the human will win **as fast as possible** (worst case for AI → AI tries hardest to block)
+- $10 + d$: AI assumes the human will **drag out** their win (weaker threat model → AI may play more loosely)
+
+The safest choice — and the one in our implementation — is $10 - d$: assume the human always goes for the fastest kill. This is the game-theoretically optimal assumption because:
+
+1. It prepares the AI for the **strongest possible opponent**
+2. Against a weaker opponent, it still plays perfectly (it can't lose either way)
+3. The AI's behavior degrades gracefully: even if the human plays suboptimally, the AI still makes the best possible moves
+
+So in practice, the only _real_ style knob we can turn is the **AI's own style** ($\text{score}_O$):
+
+| AI Mode        | $\text{score}_X$                   | $\text{score}_O$     | Behavior              |
+| -------------- | ---------------------------------- | -------------------- | --------------------- |
+| **Clinical**   | $10 - d$ (assume worst-case human) | $-10 + d$ (win fast) | Efficient, merciless  |
+| **Theatrical** | $10 - d$ (assume worst-case human) | $-10 - d$ (win slow) | Showboating, dramatic |
+
+Both are still **unbeatable** — the AI never loses either way. The only difference is whether it finishes you off quickly or toys with you first.
+
 #### Part C — Recursive exploration
 
 For each empty cell:
